@@ -16,7 +16,7 @@ func check(e error) {
 }
 
 func AddNewContentPart(dirNum, filesCount, delayMs int) {
-	ticker := time.NewTicker(time.Duration(delayMs*(rand.Intn(5)+1)) * time.Millisecond)
+	ticker := time.NewTicker(time.Duration(delayMs*(rand.Intn(dirNum)+1)) * time.Millisecond)
 	done := make(chan bool)
 
 	dirName := fmt.Sprintf("./storage/sub-storage-%v", dirNum)
