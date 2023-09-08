@@ -63,7 +63,7 @@ func PopulateStorage(dirsCount, filesCount, delayMs int) {
 
 	var wg sync.WaitGroup
 
-	for i := 0; i < dirsCount; i += 1 {
+	for i := 1; i <= dirsCount; i += 1 {
 		wg.Add(1)
 		go func(dirNum int) {
 			defer wg.Done()
