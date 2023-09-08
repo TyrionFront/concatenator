@@ -16,7 +16,7 @@ func check(e error) {
 }
 
 func AddNewContentPart(dirNum, filesCount, delayMs int) {
-	ticker := time.NewTicker(time.Duration(delayMs*(rand.Intn(5)+1)) * time.Millisecond)
+	ticker := time.NewTicker(time.Duration(delayMs*(rand.Intn(dirNum)+1)) * time.Millisecond)
 	done := make(chan bool)
 
 	dirName := fmt.Sprintf("./storage/sub-storage-%v", dirNum)
@@ -63,7 +63,7 @@ func PopulateStorage(dirsCount, filesCount, delayMs int) {
 
 	var wg sync.WaitGroup
 
-	for i := 0; i < dirsCount; i += 1 {
+	for i := 1; i <= dirsCount; i += 1 {
 		wg.Add(1)
 		go func(dirNum int) {
 			defer wg.Done()
