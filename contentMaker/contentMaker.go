@@ -5,6 +5,7 @@ import (
 	"log"
 	"math/rand"
 	"os"
+	"strings"
 	"sync"
 	"time"
 )
@@ -13,6 +14,16 @@ func check(e error) {
 	if e != nil {
 		panic(e)
 	}
+}
+
+const fragmentSize = 100
+
+func makeStubContent(template string) string {
+	var result string
+	for i := 0; i < fragmentSize; i++ {
+		result += fmt.Sprintf("%v-%v\n", template, i)
+	}
+	return strings.TrimRight(result, "\n")
 }
 
 func AddNewContentPart(dirNum, filesCount, delayMs int) {
@@ -38,7 +49,9 @@ func AddNewContentPart(dirNum, filesCount, delayMs int) {
 
 			case t := <-ticker.C:
 				counter += 1
-				stubContent := []byte(fmt.Sprintf("%v - substorage N %v", t.String(), dirNum))
+				fragment := fmt.Sprintf("%v - substorage N %v", t.String(), dirNum)
+				stubText := makeStubContent(fragment)
+				stubContent := []byte(stubText)
 				destination := fmt.Sprintf("%v/file-%v.txt", dirName, counter)
 
 				err := os.WriteFile(destination, stubContent, 0644)

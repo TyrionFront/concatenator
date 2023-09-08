@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	go contentmaker.PopulateStorage(3, 6, 500)
+	go contentmaker.PopulateStorage(10, 6, 500)
 
 	done, ticker := contentprocessor.WaitAndProces(300)
 	if <-done {
