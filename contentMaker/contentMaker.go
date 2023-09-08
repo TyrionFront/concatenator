@@ -3,6 +3,7 @@ package contentmaker
 import (
 	"fmt"
 	"log"
+	"math/rand"
 	"os"
 	"sync"
 	"time"
@@ -15,7 +16,7 @@ func check(e error) {
 }
 
 func AddNewContentPart(dirNum, filesCount, delayMs int) {
-	ticker := time.NewTicker(time.Duration(delayMs) * time.Millisecond)
+	ticker := time.NewTicker(time.Duration(delayMs*(rand.Intn(5)+1)) * time.Millisecond)
 	done := make(chan bool)
 
 	dirName := fmt.Sprintf("./storage/sub-storage-%v", dirNum)
@@ -31,15 +32,13 @@ func AddNewContentPart(dirNum, filesCount, delayMs int) {
 		for {
 			select {
 			case <-done:
-				finalFile, err := os.Create(fmt.Sprintf("%v/done.txt", dirName))
+				err := os.WriteFile(fmt.Sprintf("%v/done.txt", dirName), []byte(dirName), 0644)
 				check(err)
-
-				defer finalFile.Close()
 				return
 
 			case t := <-ticker.C:
 				counter += 1
-				stubContent := []byte(t.String())
+				stubContent := []byte(fmt.Sprintf("%v - substorage N %v", t.String(), dirNum))
 				destination := fmt.Sprintf("%v/file-%v.txt", dirName, counter)
 
 				err := os.WriteFile(destination, stubContent, 0644)
@@ -48,7 +47,7 @@ func AddNewContentPart(dirNum, filesCount, delayMs int) {
 		}
 	}()
 
-	time.Sleep(time.Duration(filesCount*delayMs+100) * time.Millisecond)
+	time.Sleep(time.Duration(filesCount*delayMs) * time.Millisecond)
 	ticker.Stop()
 	done <- true
 
@@ -72,8 +71,7 @@ func PopulateStorage(dirsCount, filesCount, delayMs int) {
 		}(i)
 	}
 	wg.Wait()
-	finalFile, err := os.Create("./storage/done.txt")
+	time.Sleep(500 * time.Millisecond)
+	err = os.WriteFile("./storage/done.txt", []byte("done"), 0644)
 	check(err)
-
-	defer finalFile.Close()
 }

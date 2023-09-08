@@ -5,6 +5,7 @@ import (
 	"io/fs"
 	"log"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -36,18 +37,18 @@ func checkIfReady(dirName string) *[]fs.DirEntry {
 
 func readSubStorage(dirName string) *string {
 	var concatenated string
-	var itemsToProcess []fs.DirEntry = *checkIfReady(dirName)
+	var itemsToProcess *[]fs.DirEntry = checkIfReady(dirName)
 
 	if itemsToProcess == nil {
 		return &concatenated
 	}
 
-	for i, file := range itemsToProcess {
+	for i, file := range *itemsToProcess {
 		filePath := fmt.Sprintf("%v/%v", dirName, file.Name())
 		content, err := os.ReadFile(filePath)
 		check(err)
 
-		if i == len(itemsToProcess)-1 {
+		if i == len(*itemsToProcess)-1 {
 			concatenated += string(content)
 		} else {
 			concatenated += string(content) + "\n"
@@ -57,30 +58,34 @@ func readSubStorage(dirName string) *string {
 	return &concatenated
 }
 
-func ReadStorage() string {
-	subStorages := checkIfReady("./storage")
-	var finalData string
+func ReadStorage(itemsToOmit *map[string]string) (bool, string) {
+	list, err := os.ReadDir("./storage")
+	check(err)
 
-	if subStorages == nil {
-		log.Println("Reader is waiting...")
-		return finalData
-	}
+	var concatenated string
 
-	for i, subSt := range *subStorages {
-		currentPath := fmt.Sprintf("./storage/%v", subSt.Name())
+	for _, subStorage := range list {
+		itemName := subStorage.Name()
+		if itemName == "done.txt" {
+			return true, concatenated
+		}
+		if len((*itemsToOmit)[itemName]) != 0 {
+			continue
+		}
+
+		currentPath := fmt.Sprintf("./storage/%v", itemName)
 		currentData := readSubStorage(currentPath)
 
 		if len(*currentData) == 0 {
+			log.Println("Reader is waiting...")
 			continue
 		}
-		if i == len(*subStorages)-1 {
-			finalData += *currentData
-		} else {
-			finalData += *currentData + "\n"
-		}
+		log.Println("Reader is reading...")
+		concatenated += *currentData + "\n"
+		(*itemsToOmit)[itemName] = itemName
 	}
 
-	return finalData
+	return false, strings.Trim(concatenated, "\n")
 }
 
 func WaitAndProces(checkIntervalMs int) (chan bool, *time.Ticker) {
@@ -89,10 +94,16 @@ func WaitAndProces(checkIntervalMs int) (chan bool, *time.Ticker) {
 
 	start := time.Now()
 	go func() {
+		itemsToOmit := make(map[string]string)
+		var finalData string
+
 		for range ticker.C {
-			concatenated := ReadStorage()
-			if len(concatenated) != 0 {
-				os.WriteFile("./result.txt", []byte(concatenated), 0644)
+			isFinished, concatenated := ReadStorage(&itemsToOmit)
+			finalData += concatenated + "\n"
+
+			if isFinished {
+				trimmed := strings.Trim(finalData, "\n")
+				os.WriteFile("./result.txt", []byte(trimmed), 0644)
 				log.Printf("Waited for the final result during: %v", time.Since(start))
 				done <- true
 				return
