@@ -82,7 +82,7 @@ func ReadStorage(itemsToOmit *map[string]string) (bool, string) {
 		if len(*currentData) == 0 {
 			continue
 		}
-		log.Printf("Reader is reading sub-storage %v...", itemName)
+		log.Printf("Reader is reading sub-storage: %v...", itemName)
 		concatenated += *currentData
 		(*itemsToOmit)[itemName] = itemName
 	}

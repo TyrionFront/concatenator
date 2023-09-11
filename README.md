@@ -2,7 +2,7 @@
 
 In main.go:
 
--   "PoultateStogare" creates subfolders inside of the "storage" folder and puts .txt files inside of these subfolders according to next params:
+-   "PoultateStogare" creates subfolders inside of the "storage" folder and puts .txt files inside of these subfolders according to next params that are taken via CLI prompt:
 
     -   `dirsCount` - number of subfolders; also is used as basis for random `int` multiplier together with _minimalDelayMs_ to calculate total waiting time for files creation;
     -   `filesCount` - number of files inside of every subfolder;
