@@ -4,9 +4,9 @@ In main.go:
 
 -   "PoultateStogare" creates subfolders inside of the "storage" folder and puts .txt files inside of these subfolders according to next params:
 
-    -   dirsCount - number of subfolders;
-    -   filesCount - number of files inside of every subfolder;
-    -   delayMs - ticker (timer) delay that defines further total duration time of the whole creation process;
+    -   `dirsCount` - number of subfolders; also is used as basis for random `int` multiplier together with _minimalDelayMs_ to calculate total waiting time for files creation;
+    -   `filesCount` - number of files inside of every subfolder;
+    -   `minimalDelayMs` - ticker (timer) delay that defines further total duration time of the whole creation process;
 
 -   "WaitAndProces" laucnhes ticker (timer) related processing of the whole storage in parallel to "PoultateStogare", based on checking of the `done.txt` files existence within every subfolder and inside of the main storage respectively.
 
