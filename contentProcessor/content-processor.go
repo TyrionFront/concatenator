@@ -43,16 +43,12 @@ func readSubStorage(dirName string) *string {
 		return &concatenated
 	}
 
-	for i, file := range *itemsToProcess {
+	for _, file := range *itemsToProcess {
 		filePath := fmt.Sprintf("%v/%v", dirName, file.Name())
 		content, err := os.ReadFile(filePath)
 		check(err)
 
-		if i == len(*itemsToProcess)-1 {
-			concatenated += string(content)
-		} else {
-			concatenated += string(content) + "\n"
-		}
+		concatenated += string(content) + "\n"
 	}
 
 	return &concatenated
@@ -62,30 +58,41 @@ func ReadStorage(itemsToOmit *map[string]string) (bool, string) {
 	list, err := os.ReadDir("./storage")
 	check(err)
 
-	var concatenated string
+	var itemsToProcess []fs.DirEntry
+	recordingCompleted := false
 
 	for _, subStorage := range list {
 		itemName := subStorage.Name()
-		if itemName == "done.txt" {
-			return true, concatenated
-		}
 		if len((*itemsToOmit)[itemName]) != 0 {
 			continue
 		}
+		if itemName == "done.txt" {
+			recordingCompleted = true
+		} else {
+			itemsToProcess = append(itemsToProcess, subStorage)
+		}
+	}
 
+	var concatenated string
+	for _, subStItem := range itemsToProcess {
+		itemName := subStItem.Name()
 		currentPath := fmt.Sprintf("./storage/%v", itemName)
 		currentData := readSubStorage(currentPath)
 
 		if len(*currentData) == 0 {
-			log.Println("Reader is waiting...")
 			continue
 		}
-		log.Println("Reader is reading...")
-		concatenated += *currentData + "\n"
+		log.Printf("Reader is reading sub-storage %v...", itemName)
+		concatenated += *currentData
 		(*itemsToOmit)[itemName] = itemName
 	}
 
-	return false, strings.Trim(concatenated, "\n")
+	if !recordingCompleted {
+		log.Println("Reader is waiting...")
+		return false, concatenated
+	}
+
+	return true, concatenated
 }
 
 func WaitAndProces(checkIntervalMs int) (chan bool, *time.Ticker) {
@@ -93,23 +100,23 @@ func WaitAndProces(checkIntervalMs int) (chan bool, *time.Ticker) {
 	done := make(chan bool)
 
 	start := time.Now()
-	go func() {
+	go func(ch chan bool) {
 		itemsToOmit := make(map[string]string)
 		var finalData string
 
 		for range ticker.C {
 			isFinished, concatenated := ReadStorage(&itemsToOmit)
-			finalData += concatenated + "\n"
+			finalData += concatenated
 
 			if isFinished {
 				trimmed := strings.Trim(finalData, "\n")
 				os.WriteFile("./result.txt", []byte(trimmed), 0644)
 				log.Printf("Waited for the final result during: %v", time.Since(start))
-				done <- true
+				ch <- true
 				return
 			}
 		}
-	}()
+	}(done)
 
 	return done, ticker
 }

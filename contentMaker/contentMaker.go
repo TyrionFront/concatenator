@@ -23,11 +23,12 @@ func makeStubContent(template string) string {
 	for i := 0; i < fragmentSize; i++ {
 		result += fmt.Sprintf("%v-%v\n", template, i)
 	}
-	return strings.TrimRight(result, "\n")
+	return strings.Trim(result, "\n")
 }
 
-func AddNewContentPart(dirNum, filesCount, delayMs int) {
-	ticker := time.NewTicker(time.Duration(delayMs*(rand.Intn(dirNum)+1)) * time.Millisecond)
+func AddNewContentPart(dirNum, filesCount, minimalDelayMs int) {
+	tickerTick := minimalDelayMs * (rand.Intn(dirNum) + 1)
+	ticker := time.NewTicker(time.Duration(tickerTick) * time.Millisecond)
 	done := make(chan bool)
 
 	dirName := fmt.Sprintf("./storage/sub-storage-%v", dirNum)
@@ -49,7 +50,7 @@ func AddNewContentPart(dirNum, filesCount, delayMs int) {
 
 			case t := <-ticker.C:
 				counter += 1
-				fragment := fmt.Sprintf("%v - substorage N %v", t.String(), dirNum)
+				fragment := fmt.Sprintf("%v - substorage N-%v, file-%v", t.String(), dirNum, counter)
 				stubText := makeStubContent(fragment)
 				stubContent := []byte(stubText)
 				destination := fmt.Sprintf("%v/file-%v.txt", dirName, counter)
@@ -60,14 +61,14 @@ func AddNewContentPart(dirNum, filesCount, delayMs int) {
 		}
 	}()
 
-	time.Sleep(time.Duration(filesCount*delayMs) * time.Millisecond)
+	time.Sleep(time.Duration(filesCount*tickerTick+int(float64(tickerTick)*0.9)) * time.Millisecond)
 	ticker.Stop()
 	done <- true
 
 	log.Printf("Initial content making for directory num.%v is finished.\nProcess took: %v\n\n", dirNum, time.Since(start))
 }
 
-func PopulateStorage(dirsCount, filesCount, delayMs int) {
+func PopulateStorage(dirsCount, filesCount, minimalDelayMs int) {
 	errRem := os.RemoveAll("./storage")
 	check(errRem)
 
@@ -80,11 +81,11 @@ func PopulateStorage(dirsCount, filesCount, delayMs int) {
 		wg.Add(1)
 		go func(dirNum int) {
 			defer wg.Done()
-			AddNewContentPart(dirNum, filesCount, delayMs)
+			AddNewContentPart(dirNum, filesCount, minimalDelayMs)
 		}(i)
 	}
 	wg.Wait()
-	time.Sleep(500 * time.Millisecond)
+	time.Sleep(time.Duration(minimalDelayMs) * time.Millisecond)
 	err = os.WriteFile("./storage/done.txt", []byte("done"), 0644)
 	check(err)
 }
