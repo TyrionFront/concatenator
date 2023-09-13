@@ -10,4 +10,4 @@ In main.go:
 
 -   "WaitAndProces" laucnhes ticker (timer) related processing of the whole storage in parallel to "PoultateStogare", based on checking of the `done.txt` files existence within every subfolder and inside of the main storage respectively.
 
-As soon as the storage is populated according to the provided params and `done.txt` files are created, content from every file in storage is read and concatenated into the final resulting file.
+As soon as the storage is populated according to the provided params and `done.txt` files are created, content from every file in storage is read and concatenated into the final resulting file (`result.txt`) that is saved inside of the main folder of the project after the `done.txt` file is created in the "storage" folder.
